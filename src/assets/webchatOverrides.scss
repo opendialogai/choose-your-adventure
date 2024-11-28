@@ -1,0 +1,67 @@
+@use './variables.scss' as *;
+
+#od-webchat {
+  .od-wrapper {
+    height: 100%;
+  }
+
+  .od-chat {
+    height: 100%;
+    margin: 0;
+    max-width: none;
+    position: static;
+    width: 100%;
+  }
+
+  .od-chat-cta {
+    display: none;
+  }
+
+  .od-chat__body {
+    height: auto;
+  }
+
+  .od-body-header,
+  .od-body__main {
+    display: none;
+  }
+
+  .od-scale-enter-active {
+    transition: none;
+  }
+
+  .odl-button {
+    background-color: #363636;
+    color: white;
+    border: none;
+    font-family: "Lilita One", sans-serif;
+    letter-spacing: 0.8px;
+  }
+
+  .od-user-input .textarea-sizer,
+  .od-user-input__button {
+    border-width: 2px;
+    border-color: #363636;
+  }
+
+  .od-user-input__button {
+    background-color: #363636;
+    color: white;
+
+    &:disabled {
+      background-color: #f6f6f6;
+      color: #363636;
+    }
+  }
+}
+
+.od-webchat--thinking {
+  .odl-external-buttons,
+  .od-user-input {
+    display: none;
+  }
+
+  .od-body-form {
+    min-height: 93px;
+  }
+}
