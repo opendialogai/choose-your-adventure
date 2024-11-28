@@ -99,7 +99,6 @@ onMounted(() => {
       showThinkingTexts.value = true
     }, 1000);
 
-    console.log(e.detail)
     if (e.detail.message.content.callback_id === 'confirmGenreChoice') {
       genre.value = e.detail.message.content.data.text.toLowerCase()
     }
