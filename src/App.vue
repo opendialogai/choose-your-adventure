@@ -4,7 +4,7 @@
     <MainHeading :genre="genre"></MainHeading>
     <section class="reading">
       <div class="reading__pane">
-        <div class="reading__pane-info">
+        <div :class="['reading__pane-info', {'reading__pane-info--expanded': expanded}]">
           <div class="reading__world">
             <h2>The World</h2>
             <TypingText :text-blocks="world" :once="true"></TypingText>
@@ -15,6 +15,7 @@
             <TypingText :text-blocks="character" :once="true"></TypingText>
             <img v-if="!character.length" class="reading__no-content" src="@/assets/thinking-bubble.svg" alt="">
           </div>
+          <button class="reading__pane-expand" @click="expanded = !expanded">{{ expanded ? 'x' : '>' }}</button>
         </div>
         <div class="reading__pane-text">
           <h2>Your Adventure</h2>
@@ -54,6 +55,7 @@ const world = ref([]);
 const character = ref([]);
 const currentScene = ref(0);
 const genre = ref('general');
+const expanded = ref(false);
 let timer = null
 const thinkingTexts = [
   'Creating atmosphere...',
@@ -190,10 +192,16 @@ const renderOptions = () => {
       background-color: rgba(255, 255, 255, 0.8);
       border-radius: 4px;
       box-shadow: 0 0 1rem 0 rgba(0, 0, 0, 0.2);
-      display: flex;
-      gap: 2rem;
-      padding: 1.5rem;
+      overflow: hidden;
+      padding: 1.5rem 1rem 1rem 2rem;
+      position: relative;
       width: 100%;
+
+      @media screen and (min-width: 768px) {
+        display: flex;
+        gap: 2rem;
+        padding: 1.5rem;
+      }
     }
 
     &__pane-text {
@@ -213,11 +221,34 @@ const renderOptions = () => {
     }
 
     &__pane-info {
+      background: white;
       display: flex;
       flex-direction: column;
-      gap: 1.5rem;
-      min-width: 25%;
-      max-width: 25%;
+      gap: 1rem;
+      height: 100%;
+      left: 0;
+      padding: 1rem;
+      position: absolute;
+      top: 0;
+      transform: translateX(-100%);
+
+      @media screen and (min-width: 768px) {
+        background: transparent;
+        min-width: 25%;
+        max-width: 25%;
+        padding: 0;
+        position: static;
+        transform: none;
+      }
+
+      &--expanded {
+        transform: translateX(0);
+
+        .reading__pane-expand {
+          right: 0;
+          border-radius: 50% 0 0 50%;
+        }
+      }
     }
 
     &__world,
@@ -225,12 +256,36 @@ const renderOptions = () => {
       flex-basis: 50%;
       font-size: 14px;
       line-height: 1.6;
+      overflow: auto;
     }
 
     &__no-content {
-      max-width: 40%;
+      max-width: 30%;
       opacity: 0.4;
-      padding: 1rem;
+
+      @media screen and (min-width: 768px) {
+        max-width: 40%;
+        padding: 1rem;
+      }
+    }
+
+    &__pane-expand {
+      background: white;
+      border: none;
+      border-radius: 0 50% 50% 0;
+      box-shadow:  0 0 1rem 0 rgba(0, 0, 0, 0.2);
+      color: $primaryText;
+      cursor: pointer;
+      font-size: 1.5rem;
+      height: 1.8rem;
+      position: absolute;
+      right: -1.5rem;
+      top: 1rem;
+      width: 1.8rem;
+
+      @media screen and (min-width: 768px) {
+        display: none;
+      }
     }
   }
 
@@ -256,6 +311,7 @@ const renderOptions = () => {
       font-style: normal;
       min-height: 100px;
       max-height: calc(20vh - 100px);
+      overflow: auto;
       padding: 1rem;
       width: 100%;
     }

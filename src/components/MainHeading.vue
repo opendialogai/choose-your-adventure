@@ -53,5 +53,21 @@ const props = withDefaults(defineProps<Props>(), {
       fill: white;
     }
   }
+
+
+  @media screen and (max-height: 901px) {
+    font-size: 4rem;
+
+    .main-heading__small {
+      font-size: 1.3rem;
+      top: 4.6rem;
+    }
+
+    .main-heading__icon {
+      top: 4rem;
+      width: 3rem;
+    }
+  }
+
 }
 </style>
