@@ -4,35 +4,45 @@
     <MainHeading :genre="genre"></MainHeading>
     <section class="reading">
       <div class="reading__pane">
-        <div :class="['reading__pane-info', {'reading__pane-info--expanded': expanded}]">
-          <div class="reading__world">
-            <h2>The World</h2>
-            <TypingText :text-blocks="world" :once="true"></TypingText>
-            <img v-if="!world.length" class="reading__no-content" src="@/assets/thinking-bubble.svg" alt="">
+        <button class="reading__refresh" @click="refreshStory">&#x21bb;</button>
+        <transition name="fade" mode="out-in">
+          <div v-if="started" :class="['reading__pane-info', {'reading__pane-info--expanded': expanded}]">
+            <div class="reading__world">
+              <h2>The World</h2>
+              <img v-if="!world.length" class="reading__no-content" src="@/assets/thinking-bubble.svg" alt="">
+              <TypingText :text-blocks="world" :once="true"></TypingText>
+            </div>
+            <div class="reading__character">
+              <h2>Your Character</h2>
+              <img v-if="!character.length" class="reading__no-content" src="@/assets/thinking-bubble.svg" alt="">
+              <TypingText :text-blocks="character" :once="true"></TypingText>
+            </div>
+            <button class="reading__pane-expand" @click="expanded = !expanded">{{ expanded ? 'x' : '>' }}</button>
           </div>
-          <div class="reading__character">
-            <h2>Your Character</h2>
-            <TypingText :text-blocks="character" :once="true"></TypingText>
-            <img v-if="!character.length" class="reading__no-content" src="@/assets/thinking-bubble.svg" alt="">
+        </transition>
+        <transition name="fade" mode="out-in">
+          <div v-if="started" class="reading__pane-text">
+            <h2>Your Adventure</h2>
+            <TypingText :text-blocks="scenes" :sequential="true" :currentString="currentScene - 1" @complete="renderOptions"></TypingText>
+            <p v-if="!scenes.length">Your story awaits! Use the controls at the bottom of the screen to generate an adventure based on your own preferences and choices.</p>
+            <div class="reading__pane-anchor"></div>
           </div>
-          <button class="reading__pane-expand" @click="expanded = !expanded">{{ expanded ? 'x' : '>' }}</button>
-        </div>
-        <div class="reading__pane-text">
-          <h2>Your Adventure</h2>
-          <TypingText :text-blocks="scenes" :sequential="true" :currentString="currentScene - 1" @complete="renderOptions"></TypingText>
-          <p v-if="!scenes.length">Your story awaits! Use the controls at the bottom of the screen to generate an adventure based on your own preferences and choices.</p>
-          <div class="reading__pane-anchor"></div>
-        </div>
+        </transition>
       </div>
     </section>
     <section v-show="showControls" class="controls">
       <div class="controls__text-window">
         <div class="controls__instructions">
-          <TypingText :text-blocks="instructions" :emptyOnUpdate="true" :speed="40"></TypingText>
+          <!-- <TypingText :text-blocks="instructions" :emptyOnUpdate="true" :speed="40"></TypingText> -->
+          <transition mode="out-in" name="fade">
+            <div v-if="instructions.length">
+              <p v-for="instruction in instructions" :key="instruction">{{ instruction }} <span class="blinking-cursor"></span></p>
+            </div>
+          </transition>
         </div>
       </div>
       <div class="controls__panel">
-        <div id="od-webchat" :class="{'od-webchat--thinking': thinking}"></div>
+        <div id="od-webchat" :class="{'od-webchat--thinking': thinking, 'od-webchat--buttons': hasButtons}"></div>
         <ThinkingBar v-if="showThinkingTexts" :textBlocks="thinkingTexts"></ThinkingBar>
       </div>
     </section>
@@ -46,7 +56,7 @@ import BackgroundImage from './components/BackgroundImage.vue'
 import TypingText from './components/TypingText.vue'
 import ThinkingBar from './components/ThinkingBar.vue'
 
-const thinking = ref(false);
+const thinking = ref(true);
 const scenes = ref([]);
 const instructions = ref([]);
 const options = ref(null);
@@ -56,6 +66,8 @@ const character = ref([]);
 const currentScene = ref(0);
 const genre = ref('general');
 const expanded = ref(false);
+const hasButtons = ref(false);
+const started = ref(false);
 let timer = null
 const thinkingTexts = [
   'Creating atmosphere...',
@@ -71,7 +83,9 @@ const settings = {
     appKey: '3377699721000000|wVsfKivU4aqEAzZs4ZXwsRGrOMoSHNpEPZ9Y3VDBf35ba03f',
     sdkEnabled: true,
     iframe: false,
-    fullScreen: true,
+    general: {
+      fullScreen: true,
+    },
     language: 'en',
     user: {
       custom: {
@@ -87,6 +101,7 @@ onBeforeMount(() => {
 
 onMounted(() => {
   webchat.on('messageReceived', (e) => {
+    started.value = true
     const arr = Array.isArray(e.detail.messages) ? e.detail.messages: [e.detail.messages]
     processMessages(arr) 
   })
@@ -137,6 +152,12 @@ const processMessages = (messages: string[]) => {
     return 
   }
 
+  if (messages.some((msg) => msg.type === 'button')) {
+    hasButtons.value = true
+  } else {
+    hasButtons.value = false
+  }
+
   messages.forEach((message, index) => {
     if (message.data.text) {
       instructions.value.push(message.data.text)
@@ -156,6 +177,21 @@ const renderOptions = () => {
   if (options.value) {
     instructions.value.push(options.value)
   }
+}
+
+const refreshStory = () => {
+  scenes.value = []
+  instructions.value = []
+  options.value = null
+  currentScene.value = 0
+  genre.value = 'general'
+  world.value = []
+  character.value = []
+  thinking.value = false
+  clearInterval(timer)
+  showThinkingTexts.value = false
+  started.value = false
+  webchat.restart(true)
 }
 
 </script>
@@ -256,6 +292,7 @@ const renderOptions = () => {
       font-size: 14px;
       line-height: 1.6;
       overflow: auto;
+      padding-right: 8px;
     }
 
     &__no-content {
@@ -264,7 +301,7 @@ const renderOptions = () => {
 
       @media screen and (min-width: 768px) {
         max-width: 40%;
-        padding: 1rem;
+        padding: 0 1rem;
       }
     }
 
@@ -286,6 +323,18 @@ const renderOptions = () => {
         display: none;
       }
     }
+
+    &__refresh {
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      font-size: 2.5rem;
+      padding: 0;
+      position: absolute;
+      right: 1rem;
+      top: 1rem;
+      transform: rotate(45deg);
+    }
   }
 
   .controls {
@@ -297,23 +346,6 @@ const renderOptions = () => {
     max-width: 800px;
     padding-bottom: 2rem;
     width: 100%;
-
-    &__text-window {
-      background-color: rgba(0, 0, 0, 0.8);
-      border-radius: 16px 16px 0 0;
-      box-shadow: 0 0 1rem 0 rgba(0, 0, 0, 0.2);
-      color: white;
-      flex-basis: 45%;
-      flex-grow: 1;
-      font-family: "Courier Prime", monospace;
-      font-weight: 400;
-      font-style: normal;
-      min-height: 100px;
-      max-height: calc(20vh - 100px);
-      overflow: auto;
-      padding: 1rem;
-      width: 100%;
-    }
 
     &__panel {
       position: relative;
@@ -331,5 +363,62 @@ const renderOptions = () => {
       transform: translateY(-50%);
       width: 100%;
     }
+
+    &__text-window {
+      background-color: rgba(0, 0, 0, 0.8);
+      border-radius: 16px 16px 0 0;
+      box-shadow: 0 0 1rem 0 rgba(0, 0, 0, 0.2);
+      color: white;
+      flex-basis: 45%;
+      flex-grow: 1;
+      font-family: "Courier Prime", monospace;
+      font-weight: 400;
+      font-style: normal;
+      min-height: 110px;
+      max-height: calc(20vh - 100px);
+      overflow: auto;
+      padding: 1rem;
+      width: 100%;
+
+      p {
+        margin-bottom: 1rem;
+
+        &:last-of-type {
+          margin-bottom: 0;
+          
+          .blinking-cursor {
+            display: inline-block;
+          }
+        }
+
+        .blinking-cursor {
+          animation: 1s blink step-end infinite;
+          color: #2E3D48;
+          display: none;
+          height: 1rem;
+          vertical-align: middle;
+          width: 0.4rem;
+        }
+      }
+    }
   }
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.5s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+@keyframes blink {
+  from, to {
+    background-color: transparent;
+  }
+  50% {
+    background-color: white;
+  }
+}
 </style>
