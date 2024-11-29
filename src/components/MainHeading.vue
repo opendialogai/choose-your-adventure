@@ -55,7 +55,7 @@ const props = withDefaults(defineProps<Props>(), {
   }
 
 
-  @media screen and (max-height: 901px) {
+  @media screen and (max-height: 1025px) {
     font-size: 4rem;
 
     .main-heading__small {
