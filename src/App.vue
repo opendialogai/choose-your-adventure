@@ -207,6 +207,10 @@ const refreshStory = () => {
     max-width: 1280px;
     padding: 0 1rem 2rem;
     position: relative;
+
+    @media screen and (min-height: 1025px) {
+      padding-top: 1rem;
+    }
   }
 
   .reading {

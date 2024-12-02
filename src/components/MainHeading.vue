@@ -25,6 +25,7 @@ const props = withDefaults(defineProps<Props>(), {
   font-size: 6rem;
   font-style: normal;
   position: relative;
+  text-shadow: 1px 1px 3px white;
   text-transform: uppercase;
   top: -3.5rem;
   z-index: 10;
@@ -43,14 +44,18 @@ const props = withDefaults(defineProps<Props>(), {
 
     path {
       fill: $primaryText;
+      stroke: white;
+      stroke-width: 2px;
     }
   }
 
   &--pirates {
     color: white;
+    text-shadow: 1px 1px 3px black;
 
     .main-heading__icon path {
       fill: white;
+      stroke: black;
     }
   }
 
