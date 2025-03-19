@@ -10,7 +10,7 @@
             <div class="reading__world">
               <h2>The World</h2>
               <img v-if="!world.length" class="reading__no-content" src="@/assets/thinking-bubble.svg" alt="">
-              <TypingText :text-blocks="world" :once="true"></TypingText>
+              <TypingText :text-blocks="world" :empty-on-update="true"></TypingText>
             </div>
             <div class="reading__character">
               <h2>Your Character</h2>
@@ -56,19 +56,45 @@ import BackgroundImage from './components/BackgroundImage.vue'
 import TypingText from './components/TypingText.vue'
 import ThinkingBar from './components/ThinkingBar.vue'
 
+// Add declaration for ODWebChat if it's not imported from a module
+declare const ODWebChat: {
+  OpenDialogChatSDK: new (selector: string) => {
+    on: (event: string, callback: (e: CustomEvent) => void) => void;
+    init: (settings: Object) => void;
+    restart: (clearUser: boolean) => void;
+  };
+};
+
+// Define interfaces for the data structures
+interface MessageData {
+  text?: string;
+  elements?: {
+    storySetting?: string;
+    characterProfile?: string;
+    scene?: string;
+  };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  [key: string]: any;
+}
+
+interface Message {
+  type: string;
+  data: MessageData;
+}
+
 const thinking = ref(true);
-const scenes = ref([]);
-const instructions = ref([]);
-const options = ref(null);
+const scenes = ref<string[]>([]);
+const instructions = ref<string[]>([]);
+const options = ref<string | null>(null);
 const showControls = ref(false);
-const world = ref([]);
-const character = ref([]);
+const world = ref<string[]>([]);
+const character = ref<string[]>([]);
 const currentScene = ref(0);
 const genre = ref('general');
 const expanded = ref(false);
 const hasButtons = ref(false);
 const started = ref(false);
-let timer = null
+let timer: number | null = null
 const thinkingTexts = [
   'Creating atmosphere...',
   'Getting your character into trouble...',
@@ -100,17 +126,17 @@ onBeforeMount(() => {
 })
 
 onMounted(() => {
-  webchat.on('messageReceived', (e) => {
+  webchat.on('messageReceived', (e: CustomEvent) => {
     started.value = true
-    const arr = Array.isArray(e.detail.messages) ? e.detail.messages: [e.detail.messages]
-    processMessages(arr) 
+    const arr = Array.isArray(e.detail.messages) ? e.detail.messages : [e.detail.messages]
+    processMessages(arr)
   })
 
-  webchat.on('messageSent', (e) => {
+  webchat.on('messageSent', (e: CustomEvent) => {
     thinking.value = true
     instructions.value = []
     options.value = null
-    timer = setInterval(() => {
+    timer = window.setInterval(() => {
       showThinkingTexts.value = true
     }, 1000);
 
@@ -126,30 +152,31 @@ onMounted(() => {
   })
 
   webchat.init(settings)
-}) 
+})
 
-const processMessages = (messages: string[]) => {
-  const storySetting = messages.find((msg) => msg.type === 'meta' && msg.data.elements.storySetting)
-  const characterProfile = messages.find((msg) => msg.type === 'meta' && msg.data.elements.characterProfile)
-  
-  if (storySetting && !world.value.length) {
+const processMessages = (messages: Message[]) => {
+  const storySetting = messages.find((msg) => msg.type === 'meta' && msg.data.elements?.storySetting)
+  const characterProfile = messages.find((msg) => msg.type === 'meta' && msg.data.elements?.characterProfile)
+
+  if (storySetting && storySetting.data.elements?.storySetting && storySetting.data.elements.storySetting !== world.value[0]) {
+    world.value = []
     world.value.push(storySetting.data.elements.storySetting)
   }
-  
-  if (characterProfile && !character.value.length) {
-    character.value.push(characterProfile.data.elements.characterProfile) 
+
+  if (characterProfile && characterProfile.data.elements?.characterProfile && !character.value.length) {
+    character.value.push(characterProfile.data.elements.characterProfile)
   }
 
-  if (messages.some((msg) => msg.type === 'meta' && msg.data.elements.scene)) {
-    messages.forEach((message, index) => {
+  if (messages.some((msg) => msg.type === 'meta' && msg.data.elements?.scene)) {
+    messages.forEach((message) => {
       if (message.type === 'text' && message.data.text) {
         scenes.value.push(message.data.text)
-        currentScene.value ++
+        currentScene.value++
       } else if (message.type === 'button' && message.data.text) {
         options.value = message.data.text
       }
     })
-    return 
+    return
   }
 
   if (messages.some((msg) => msg.type === 'button')) {
@@ -158,19 +185,25 @@ const processMessages = (messages: string[]) => {
     hasButtons.value = false
   }
 
-  messages.forEach((message, index) => {
+  messages.forEach((message) => {
     if (message.data.text) {
       instructions.value.push(message.data.text)
     }
   })
 
-  clearInterval(timer)
+  if (timer !== null) {
+    clearInterval(timer)
+    timer = null
+  }
   showThinkingTexts.value = false
   setTimeout(() => {thinking.value = false}, 50)
 }
 
 const renderOptions = () => {
-  clearInterval(timer)
+  if (timer !== null) {
+    clearInterval(timer)
+    timer = null
+  }
   showThinkingTexts.value = false
   setTimeout(() => {thinking.value = false}, 50)
 
@@ -188,7 +221,10 @@ const refreshStory = () => {
   world.value = []
   character.value = []
   thinking.value = false
-  clearInterval(timer)
+  if (timer !== null) {
+    clearInterval(timer)
+    timer = null
+  }
   showThinkingTexts.value = false
   started.value = false
   webchat.restart(true)
@@ -389,7 +425,7 @@ const refreshStory = () => {
 
         &:last-of-type {
           margin-bottom: 0;
-          
+
           .blinking-cursor {
             display: inline-block;
           }

@@ -12,16 +12,11 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-
-const background = computed(() => new URL(`../assets/background-${props.genre}.jpeg`, import.meta.url).href)
-const backgroundVar = computed(() => `url(${background.value})`)
-
 interface Props {
   genre: string;
 }
 
-const props = withDefaults(defineProps<Props>(), {
+withDefaults(defineProps<Props>(), {
   genre: 'general',
 })
 

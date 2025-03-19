@@ -6,23 +6,26 @@
 
 <script setup lang="ts">
 import TypeIt from 'typeit';
-import { ref, watchEffect, onMounted, watch } from 'vue';
+import { ref, onMounted } from 'vue';
 
 const uuid = ref(self.crypto.randomUUID());
-let typeitInstance = null
+let typeitInstance: TypeIt | null = null;
 
 const props = defineProps({
-  textBlocks: Array,
-})
+  textBlocks: {
+    type: Array as () => string[],
+    required: true
+  },
+});
 
-const randomInteger = (min, max) => {
+const randomInteger = (min: number, max: number): number => {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
 onMounted(() => {
-  const typeitContainer = document.querySelector(`.typeit-container--${uuid.value}`);
+  const typeitContainer: HTMLElement | null = document.querySelector(`.typeit-container--${uuid.value}`);
   const randomStartPoint = randomInteger(0, props.textBlocks.length);
-  let arr = [...props.textBlocks];
+  let arr: string[] = [...props.textBlocks];
   const tmp = arr.splice(0, randomStartPoint);
   arr = arr.concat(tmp);
 
@@ -37,7 +40,6 @@ onMounted(() => {
     }).go();
   }
 })
-
 </script>
 
 <style scoped lang="scss">
