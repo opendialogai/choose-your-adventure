@@ -110,7 +110,7 @@ const settings = {
     sdkEnabled: true,
     iframe: false,
     general: {
-      fullScreen: true,
+      fullScreen: false,
     },
     language: 'en',
     user: {
